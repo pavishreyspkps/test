@@ -1,0 +1,82 @@
+pipeline {
+    agent any
+    //parameters {
+        //string(name: 'app', defaultValue: 'httin', description: 'This defines')
+    //}
+    environment {
+         APP_URL_API="http://43.205.255.246:5000/login"
+         APP_URL_CLIENT="http://43.205.255.246:3000"
+         DB_LINK="kirklogitech:7uj5qJFKfqoiKjuM@cluster0.yrxhvku.mongodb.net/test"
+         JWT_SECRET="token"
+         REACT_APP_API_URL="http://43.205.255.246:8081"
+         REACT_APP_URL="http://43.205.255.246:3000"
+    }
+    stages{
+        stage('Pull frontend code') {
+            steps{
+                dir("frontend"){
+                git(
+                url: "git@github.com:ElistaCore/TestFrontend.git/", 
+                branch: "main",
+                credentialsId: "new",
+                changelog: true,
+                poll: true
+            )
+                }
+            }
+        }
+        stage('Pull backend code') {
+            steps{
+                dir("backend"){
+                git(
+                url: "git@github.com:ElistaCore/TestBackend.git/", 
+                branch: "main",
+                credentialsId: "new",
+                changelog: true,
+                poll: true
+            )
+                }
+            }
+        }
+       
+        stage('Build docker images') {
+            steps{
+                dir("frontend"){
+             sh " docker compose build"
+            }
+            
+            }
+        }
+        stage('Tag and Push docker images') {
+            steps{
+                dir("frontend"){
+             sh "cat registry | docker login --username kirkglpro --password-stdin"
+             sh "docker tag frontend:latest kirkglpro/frontend:${BUILD_NUMBER}"
+             sh "docker push kirkglpro/frontend:${BUILD_NUMBER}"
+             sh "docker tag backend:latest kirkglpro/backend:${BUILD_NUMBER}"
+             sh "docker push kirkglpro/backend:${BUILD_NUMBER}"
+             sh "docker logout"
+            }
+            }
+        }
+        stage('Deploy App to server') {
+            steps{
+            dir("frontend"){
+            sh "docker compose up -d"
+            }
+            }
+        }
+        stage('Clean up') {
+            steps{
+            sh "docker rmi kirkglpro/frontend:${BUILD_NUMBER}"
+            sh "docker rmi kirkglpro/backend:${BUILD_NUMBER}"
+            }
+        }
+
+    }
+        post {
+        always {
+            deleteDir()
+        }
+    }
+}
