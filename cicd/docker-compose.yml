@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  backend:
+    environment:
+      DB_LINK: ${DB_LINK}
+      JWT_SECRET: ${JWT_SECRET}
+      APP_URL_CLIENT: ${APP_URL_CLIENT}
+      APP_URL_API: ${APP_URL_API}
+      MAILTRAP_USER: "vvvvvv"
+      MAILTRAP_PASSWORD: "vvvv"
+    build:
+      context: ./../backend
+      dockerfile: Dockerfile
+    image: "backend"
+    ports:
+      - "5000:5000"
+      - "8081:8080"
+      - "3001:3000"
+  frontend:
+    environment:
+      GENERATE_SOURCEMAP: "false"
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+      REACT_APP_URL: ${REACT_APP_URL}
+      REACT_APP_IS_DEMO: "NA"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "frontend"
+    ports:
+      - "3000:3000"
+    links:
+      - "backend:be"
