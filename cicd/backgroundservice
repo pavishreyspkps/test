@@ -1,0 +1,2 @@
+running in background 
+nohup applicatio_service &
